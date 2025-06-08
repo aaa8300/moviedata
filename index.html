@@ -11,22 +11,44 @@
 
 </head>
 <body>
-    <h1>Movie Ratings App</h1>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 Movie Ratings Explorer</h1>
+            <p>Discover insights about your favorite movies and genres</p>
+        </div>
 
-    <label>Upload CSV:</label>
-    <input type="file" id="fileInput"><br><br>
+        <div class="main-content">
+            <div class="search-section">
+                <div class="search-group">
+                    <div class="input-wrapper">
+                        <label for="favMovie">🎯 Enter Your Favorite Movie:</label>
+                        <input type="text" id="favMovie" placeholder="e.g., Avengers: Endgame">
+                    </div>
+                    <button class="analyze-btn" onclick="analyze()">✨ Analyze Movie</button>
+                </div>
+            </div>
 
-    <label>Favorite Movie:</label>
-    <input type="text" id="favMovie" value="Avengers: Endgame"><br><br>
+            <div id="loading" class="loading">
+                📊 Loading movie data...
+            </div>
 
-    <label>Genre:</label>
-    <input type="text" id="genreInput" value="Action"><br><br>
+            <div id="results" class="results-section">
+                <div id="movieCard" class="movie-card"></div>
+                <div id="statsCard" class="stats-card"></div>
+                <div class="charts-container">
+                    <div class="chart-card">
+                        <div class="chart-title">📊 Rating Distribution</div>
+                        <canvas id="histogramChart" width="400" height="300"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">🎭 Audience vs Critics</div>
+                        <canvas id="scatterChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
 
-    <button onclick="analyze()">Analyze</button>
-
-    <div id="output"></div>
-
-    <canvas id="histogramChart" width="400" height="200"></canvas>
-    <canvas id="scatterChart" width="400" height="200"></canvas>
+            <div id="errorMessage" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
 </body>
 </html>
