@@ -3,7 +3,7 @@ let movieData = [];
         let scatterChart = null;
 
         // Load CSV data from file
-        async function loadCSVData(filePath) {
+        async function loadCSVData(filePath) { 
           try {
             const response = await fetch(filePath);
             if (!response.ok) {
