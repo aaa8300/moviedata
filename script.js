@@ -1,76 +1,82 @@
 let movieData = [];
-        let histogramChart = null;
-        let scatterChart = null;
+let histogramChart = null;
+let scatterChart = null;
 
-        // Load CSV data from file
-        async function loadCSVData(filePath) { 
-          try {
-            const response = await fetch(filePath);
-            if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const csvData = await response.text();
-            // Process your CSV data here
-            console.log(csvData);
-          } catch (error) {
-            console.error('Error loading CSV file:', error);
-          }
+// Load and parse CSV file using PapaParse
+async function loadCSVData(filePath) {
+    try {
+        const response = await fetch(filePath);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+        const csvText = await response.text();
+        const parsed = Papa.parse(csvText, {
+            header: true,
+            skipEmptyLines: true
+        });
 
-        // Call the function with the path to your CSV file
-        movieData = loadCSVData('rotten_tomatoes_movies.csv');
+        movieData = parsed.data;
+        console.log("Movie data loaded:", movieData);
+    } catch (error) {
+        console.error('Error loading CSV file:', error);
+        showError("Failed to load movie data.");
+    }
+}
 
-        function analyze() {
-            const favMovie = document.getElementById("favMovie").value.trim();
-            const resultsSection = document.getElementById("results");
-            const errorMessage = document.getElementById("errorMessage");
-            
-            // Clear previous results
-            errorMessage.style.display = 'none';
-            resultsSection.style.display = 'none';
+// Load data on page load
+window.addEventListener('DOMContentLoaded', () => {
+    loadCSVData('rotten_tomatoes_movies.csv');
+});
 
-            if (!favMovie) {
-                showError("Please enter a movie title!");
-                return;
-            }
+// Triggered by Enter key or button
+function analyze() {
+    const favMovieInput = document.getElementById("favMovie");
+    const favMovie = favMovieInput.value.trim();
+    const resultsSection = document.getElementById("results");
+    const errorMessage = document.getElementById("errorMessage");
 
-            if (movieData.length === 0) {
-                showError("Movie data is still loading. Please wait a moment and try again.");
-                return;
-            }
+    errorMessage.style.display = 'none';
+    resultsSection.style.display = 'none';
 
-            // Find the movie (case-insensitive)
-            const favMovieData = movieData.find(m => 
-                m.movie_title && 
-                typeof m.movie_title === 'string' && 
-                m.movie_title.toLowerCase() === favMovie.toLowerCase()
-            );
+    if (!favMovie) {
+        showError("Please enter a movie title!");
+        return;
+    }
 
-            if (!favMovieData) {
-                showError(`Movie "${favMovie}" not found in our database. Please check the spelling or try another movie.`);
-                return;
-            }
+    if (!Array.isArray(movieData) || movieData.length === 0) {
+        showError("Movie data is still loading. Please wait a moment and try again.");
+        return;
+    }
 
-            // Get the movie's genres
-            const movieGenres = (favMovieData.genres && typeof favMovieData.genres === 'string') 
-                ? favMovieData.genres.split('|') 
-                : [];
-            
-            if (movieGenres.length === 0) {
-                showError("No genre information available for this movie.");
-                return;
-            }
+    // Case-insensitive search
+    const favMovieData = movieData.find(m =>
+        m.movie_title &&
+        m.movie_title.toLowerCase() === favMovie.toLowerCase()
+    );
 
-            // Get all movies that share at least one genre with the favorite movie
-            const genreMovies = movieData.filter(m => {
-                if (!m.genres || typeof m.genres !== 'string') return false;
-                const genres = m.genres.split('|');
-                return genres.some(genre => movieGenres.includes(genre));
-            });
+    if (!favMovieData) {
+        showError(`Movie "${favMovie}" not found in the database. Please check the spelling or try another movie.`);
+        return;
+    }
 
-            displayResults(favMovieData, genreMovies, movieGenres);
-            resultsSection.style.display = 'block';
-        }
+    const movieGenres = (favMovieData.genres && typeof favMovieData.genres === 'string')
+        ? favMovieData.genres.split('|')
+        : [];
+
+    if (movieGenres.length === 0) {
+        showError("No genre information available for this movie.");
+        return;
+    }
+
+    const genreMovies = movieData.filter(m => {
+        if (!m.genres || typeof m.genres !== 'string') return false;
+        const genres = m.genres.split('|');
+        return genres.some(genre => movieGenres.includes(genre));
+    });
+
+    displayResults(favMovieData, genreMovies, movieGenres);
+    resultsSection.style.display = 'block';
+}
 
         function displayResults(favMovieData, genreMovies, movieGenres) {
             displayMovieCard(favMovieData, movieGenres);
