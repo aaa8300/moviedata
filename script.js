@@ -3,88 +3,22 @@ let movieData = [];
         let scatterChart = null;
 
         // Load CSV data from file
-        window.addEventListener('load', function() {
-            loadCSVData();
-        });
-
-        async function loadCSVData() {
-            try {
-                // Try to read the CSV file using the file system API
-                const csvContent = await window.fs.readFile('movieData.csv', { encoding: 'utf8' });
-                
-                Papa.parse(csvContent, {
-                    header: true,
-                    skipEmptyLines: true,
-                    dynamicTyping: true,
-                    complete: function(results) {
-                        movieData = results.data;
-                        document.getElementById('loading').style.display = 'none';
-                        console.log('Movie data loaded:', movieData.length, 'movies');
-                        
-                        // Show success message
-                        const loadingDiv = document.getElementById('loading');
-                        loadingDiv.innerHTML = '✅ Movie data loaded successfully!';
-                        loadingDiv.style.color = '#28a745';
-                        setTimeout(() => {
-                            loadingDiv.style.display = 'none';
-                        }, 2000);
-                    },
-                    error: function(error) {
-                        console.error('Error parsing CSV:', error);
-                        showLoadingError('Error parsing CSV file. Please check the file format.');
-                    }
-                });
-            } catch (error) {
-                console.error('Error loading CSV file:', error);
-                
-                // If file reading fails, try to fetch from the same directory
-                try {
-                    const response = await fetch('movieData.csv');
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-                    
-                    const csvContent = await response.text();
-                    
-                    Papa.parse(csvContent, {
-                        header: true,
-                        skipEmptyLines: true,
-                        dynamicTyping: true,
-                        complete: function(results) {
-                            movieData = results.data;
-                            document.getElementById('loading').style.display = 'none';
-                            console.log('Movie data loaded:', movieData.length, 'movies');
-                            
-                            // Show success message
-                            const loadingDiv = document.getElementById('loading');
-                            loadingDiv.innerHTML = '✅ Movie data loaded successfully!';
-                            loadingDiv.style.color = '#28a745';
-                            setTimeout(() => {
-                                loadingDiv.style.display = 'none';
-                            }, 2000);
-                        },
-                        error: function(error) {
-                            console.error('Error parsing CSV:', error);
-                            showLoadingError('Error parsing CSV file. Please check the file format.');
-                        }
-                    });
-                } catch (fetchError) {
-                    console.error('Error fetching CSV file:', fetchError);
-                    showLoadingError('Could not load movie data. Please make sure "movieData.csv" exists in the same folder.');
-                }
+        async function loadCSVData(filePath) {
+          try {
+            const response = await fetch(filePath);
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
             }
+            const csvData = await response.text();
+            // Process your CSV data here
+            console.log(csvData);
+          } catch (error) {
+            console.error('Error loading CSV file:', error);
+          }
         }
 
-        function showLoadingError(message) {
-            const loadingDiv = document.getElementById('loading');
-            loadingDiv.innerHTML = `❌ ${message}`;
-            loadingDiv.style.color = '#dc3545';
-            
-            // Also show in error message div
-            const errorDiv = document.getElementById('errorMessage');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-        }
+        // Call the function with the path to your CSV file
+        movieData = loadCSVData('rotten_tomatoes_movies.csv');
 
         function analyze() {
             const favMovie = document.getElementById("favMovie").value.trim();
