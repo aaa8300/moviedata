@@ -10,7 +10,7 @@ let movieData = [];
         async function loadCSVData() {
             try {
                 // Try to read the CSV file using the file system API
-                const csvContent = await window.fs.readFile('rotten_tomatoes_movies.csv', { encoding: 'utf8' });
+                const csvContent = await window.fs.readFile('movieData.csv', { encoding: 'utf8' });
                 
                 Papa.parse(csvContent, {
                     header: true,
@@ -39,7 +39,7 @@ let movieData = [];
                 
                 // If file reading fails, try to fetch from the same directory
                 try {
-                    const response = await fetch('rotten_tomatoes_movies.csv');
+                    const response = await fetch('movieData.csv');
                     if (!response.ok) {
                         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                     }
@@ -70,7 +70,7 @@ let movieData = [];
                     });
                 } catch (fetchError) {
                     console.error('Error fetching CSV file:', fetchError);
-                    showLoadingError('Could not load movie data. Please make sure "rotten_tomatoes_movies.csv" exists in the same folder.');
+                    showLoadingError('Could not load movie data. Please make sure "movieData.csv" exists in the same folder.');
                 }
             }
         }
@@ -107,7 +107,9 @@ let movieData = [];
 
             // Find the movie (case-insensitive)
             const favMovieData = movieData.find(m => 
-                m.movie_title && m.movie_title.toLowerCase() === favMovie.toLowerCase()
+                m.movie_title && 
+                typeof m.movie_title === 'string' && 
+                m.movie_title.toLowerCase() === favMovie.toLowerCase()
             );
 
             if (!favMovieData) {
@@ -116,7 +118,9 @@ let movieData = [];
             }
 
             // Get the movie's genres
-            const movieGenres = favMovieData.genres ? favMovieData.genres.split('|') : [];
+            const movieGenres = (favMovieData.genres && typeof favMovieData.genres === 'string') 
+                ? favMovieData.genres.split('|') 
+                : [];
             
             if (movieGenres.length === 0) {
                 showError("No genre information available for this movie.");
@@ -125,7 +129,7 @@ let movieData = [];
 
             // Get all movies that share at least one genre with the favorite movie
             const genreMovies = movieData.filter(m => {
-                if (!m.genres) return false;
+                if (!m.genres || typeof m.genres !== 'string') return false;
                 const genres = m.genres.split('|');
                 return genres.some(genre => movieGenres.includes(genre));
             });
@@ -142,8 +146,22 @@ let movieData = [];
 
         function displayMovieCard(movie, genres) {
             const movieCard = document.getElementById('movieCard');
-            const audienceRating = parseFloat(movie.audience_rating) || 0;
-            const criticRating = parseFloat(movie.critic_rating) || 0;
+            
+            // Safely handle ratings
+            let audienceRating = 0;
+            let criticRating = 0;
+            
+            if (typeof movie.audience_rating === 'string') {
+                audienceRating = parseFloat(movie.audience_rating) || 0;
+            } else if (typeof movie.audience_rating === 'number') {
+                audienceRating = movie.audience_rating;
+            }
+            
+            if (typeof movie.critic_rating === 'string') {
+                criticRating = parseFloat(movie.critic_rating) || 0;
+            } else if (typeof movie.critic_rating === 'number') {
+                criticRating = movie.critic_rating;
+            }
             
             movieCard.innerHTML = `
                 <div class="movie-title">
@@ -174,7 +192,13 @@ let movieData = [];
         function displayStats(favMovie, genreMovies, genres) {
             const statsCard = document.getElementById('statsCard');
             const ratings = genreMovies
-                .map(m => parseFloat(m.audience_rating))
+                .map(m => {
+                    const rating = m.audience_rating;
+                    // Handle both string and number inputs
+                    if (typeof rating === 'string') return parseFloat(rating);
+                    if (typeof rating === 'number') return rating;
+                    return NaN;
+                })
                 .filter(r => !isNaN(r));
 
             if (ratings.length === 0) {
@@ -185,7 +209,15 @@ let movieData = [];
             const min = Math.min(...ratings);
             const max = Math.max(...ratings);
             const mean = ratings.reduce((a, b) => a + b, 0) / ratings.length;
-            const favRating = parseFloat(favMovie.audience_rating) || 0;
+            
+            // Handle favorite movie rating safely
+            let favRating = 0;
+            if (typeof favMovie.audience_rating === 'string') {
+                favRating = parseFloat(favMovie.audience_rating) || 0;
+            } else if (typeof favMovie.audience_rating === 'number') {
+                favRating = favMovie.audience_rating;
+            }
+            
             const comparison = favRating - mean;
 
             statsCard.innerHTML = `
@@ -217,7 +249,12 @@ let movieData = [];
 
         function drawCharts(movies) {
             const ratings = movies
-                .map(m => parseFloat(m.audience_rating))
+                .map(m => {
+                    const rating = m.audience_rating;
+                    if (typeof rating === 'string') return parseFloat(rating);
+                    if (typeof rating === 'number') return rating;
+                    return NaN;
+                })
                 .filter(r => !isNaN(r));
 
             drawHistogram(ratings);
@@ -280,11 +317,29 @@ let movieData = [];
             }
 
             const points = movies
-                .map(m => ({
-                    x: parseFloat(m.audience_rating),
-                    y: parseFloat(m.critic_rating),
-                    label: m.movie_title
-                }))
+                .map(m => {
+                    // Safely handle both ratings
+                    let audienceRating = NaN;
+                    let criticRating = NaN;
+                    
+                    if (typeof m.audience_rating === 'string') {
+                        audienceRating = parseFloat(m.audience_rating);
+                    } else if (typeof m.audience_rating === 'number') {
+                        audienceRating = m.audience_rating;
+                    }
+                    
+                    if (typeof m.critic_rating === 'string') {
+                        criticRating = parseFloat(m.critic_rating);
+                    } else if (typeof m.critic_rating === 'number') {
+                        criticRating = m.critic_rating;
+                    }
+                    
+                    return {
+                        x: audienceRating,
+                        y: criticRating,
+                        label: m.movie_title || 'Unknown Title'
+                    };
+                })
                 .filter(p => !isNaN(p.x) && !isNaN(p.y));
 
             scatterChart = new Chart(ctx, {
