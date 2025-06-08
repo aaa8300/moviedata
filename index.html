@@ -11,6 +11,22 @@
 
 </head>
 <body>
-    
+    <h1>Movie Ratings App</h1>
+
+    <label>Upload CSV:</label>
+    <input type="file" id="fileInput"><br><br>
+
+    <label>Favorite Movie:</label>
+    <input type="text" id="favMovie" value="Avengers: Endgame"><br><br>
+
+    <label>Genre:</label>
+    <input type="text" id="genreInput" value="Action"><br><br>
+
+    <button onclick="analyze()">Analyze</button>
+
+    <div id="output"></div>
+
+    <canvas id="histogramChart" width="400" height="200"></canvas>
+    <canvas id="scatterChart" width="400" height="200"></canvas>
 </body>
 </html>
