@@ -119,12 +119,9 @@ function analyze() {
                     </div>
                     <div class="detail-item">
                         <div class="detail-label">Year</div>
-                        <div class="detail-value">${movie.year || 'N/A'}</div>
+                        <div class="detail-value">${movie.year_released || 'N/A'}</div>
                     </div>
-                    <div class="detail-item">
-                        <div class="detail-label">Director</div>
-                        <div class="detail-value">${movie.director || 'N/A'}</div>
-                    </div>
+                    
                 </div>
             `;
         }
